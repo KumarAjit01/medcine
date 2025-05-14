@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus } from 'lucide-react';
+import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus, Shield } from 'lucide-react';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -13,6 +14,7 @@ const navLinks = [
   { href: '/medicines', label: 'Medicines', icon: ListTree },
   { href: '/ai-recommendations', label: 'AI Recommender', icon: Bot },
   { href: '/prescriptions/upload', label: 'Upload Prescription', icon: UploadCloud },
+  { href: '/admin', label: 'Admin', icon: Shield },
 ];
 
 const Header = () => {

@@ -17,6 +17,15 @@ export interface Category {
   description?: string;
 }
 
+export interface Order {
+  id: string;
+  customerName: string;
+  orderDate: string; // ISO date string e.g. "2023-10-26"
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  totalAmount: number;
+  itemCount: number;
+}
+
 export const mockCategories: Category[] = [
   { id: 'pain-relief', name: 'Pain Relief', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'pills painkiller', description: 'Relieve various types of pain effectively.' },
   { id: 'cold-flu', name: 'Cold & Flu', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'tissue sickness', description: 'Combat cold and flu symptoms quickly.' },
@@ -37,4 +46,14 @@ export const mockMedicines: Medicine[] = [
   { id: '8', name: 'Multivitamin Gummies', category: 'Vitamins & Supplements', price: 18.99, description: 'Tasty and convenient way to get essential daily vitamins and minerals for adults.', imageUrl: 'https://placehold.co/400x300.png', stock: 110, dataAiHint: 'gummy vitamins' },
   { id: '9', name: 'Probiotic Capsules', category: 'Digestive Health', price: 22.50, description: 'Supports a healthy gut microbiome and improves digestion. Contains 10 billion CFUs.', imageUrl: 'https://placehold.co/400x300.png', stock: 70, dataAiHint: 'probiotic pill' },
   { id: '10', name: 'Sunscreen SPF 50', category: 'Skincare', price: 12.75, description: 'Broad-spectrum protection against UVA and UVB rays. Water-resistant formula.', imageUrl: 'https://placehold.co/400x300.png', stock: 85, dataAiHint: 'sunscreen bottle' },
+];
+
+export const mockOrders: Order[] = [
+  { id: 'ORD001', customerName: 'Alice Smith', orderDate: '2024-07-15T10:30:00Z', status: 'Delivered', totalAmount: 45.98, itemCount: 3 },
+  { id: 'ORD002', customerName: 'Bob Johnson', orderDate: '2024-07-16T14:00:00Z', status: 'Shipped', totalAmount: 25.50, itemCount: 1 },
+  { id: 'ORD003', customerName: 'Carol Williams', orderDate: '2024-07-17T09:15:00Z', status: 'Processing', totalAmount: 120.00, itemCount: 5 },
+  { id: 'ORD004', customerName: 'David Brown', orderDate: '2024-07-17T11:00:00Z', status: 'Pending', totalAmount: 15.99, itemCount: 1 },
+  { id: 'ORD005', customerName: 'Eve Davis', orderDate: '2024-07-14T16:45:00Z', status: 'Cancelled', totalAmount: 33.75, itemCount: 2 },
+  { id: 'ORD006', customerName: 'Frank Miller', orderDate: '2024-07-18T08:20:00Z', status: 'Pending', totalAmount: 75.20, itemCount: 4 },
+  { id: 'ORD007', customerName: 'Grace Wilson', orderDate: '2024-07-18T10:55:00Z', status: 'Processing', totalAmount: 50.00, itemCount: 2 },
 ];
