@@ -9,15 +9,13 @@ const serverSignupDataSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }).regex(/^\+?[0-9\s-()]+$/, 'Invalid phone number format.'),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  address: z.string().optional(), // Added address
 });
-type SimulatedUser = z.infer<typeof serverSignupDataSchema>;
+export type SimulatedUser = z.infer<typeof serverSignupDataSchema>;
 let simulatedUsersStore: SimulatedUser[] = [];
 
 // --- Signup Schemas and Action ---
-const serverSignupSchema = serverSignupDataSchema.extend({
-  // No need to extend if serverSignupDataSchema already has all fields for storage
-});
-
+const serverSignupSchema = serverSignupDataSchema.omit({ address: true }); // Address is not collected at signup initially
 
 export type SignupFormState = {
   success: boolean;
@@ -27,9 +25,10 @@ export type SignupFormState = {
     email?: string[];
     phone?: string[];
     password?: string[];
-    _form?: string[]; // For general form errors not specific to a field
+    _form?: string[];
   };
-  redirectTo?: string; // Added for auto-login redirect
+  user?: SimulatedUser; // Return user object on success
+  redirectTo?: string;
 };
 
 export async function signupUserAction(
@@ -47,17 +46,13 @@ export async function signupUserAction(
 
   const { name, email, phone, password } = validatedFields.data;
 
-  // --- Simulate User Creation ---
   console.log('Server Action: Attempting to sign up user:');
   console.log('Name:', name);
   console.log('Email:', email);
   console.log('Phone:', phone);
-  // console.log('Password:', password); // In a real app, never log the raw password.
 
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Check if email already exists in store or is the hardcoded existing email
   if (email.toLowerCase() === "exists@example.com" || simulatedUsersStore.find(user => user.email.toLowerCase() === email.toLowerCase())) {
     return {
       success: false,
@@ -66,15 +61,15 @@ export async function signupUserAction(
     };
   }
 
-  // Add user to our in-memory store
-  simulatedUsersStore.push({ name, email, phone, password });
+  const newUser: SimulatedUser = { name, email, phone, password, address: '' }; // Initialize address as empty string
+  simulatedUsersStore.push(newUser);
   console.log('Current simulated users:', simulatedUsersStore.map(u => u.email));
-  // --- End Simulation ---
 
-  return { 
-    success: true, 
+  return {
+    success: true,
     message: `Welcome, ${name}! Your account has been created. Redirecting...`,
-    redirectTo: "/" // Redirect to homepage after successful signup
+    user: newUser, // Return the new user object
+    redirectTo: "/"
   };
 }
 
@@ -82,7 +77,7 @@ export async function signupUserAction(
 // --- Login Schemas and Action ---
 const serverLoginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(1, { message: 'Password cannot be empty.' }), // Min 1 for presence, actual length check by auth system
+  password: z.string().min(1, { message: 'Password cannot be empty.' }),
 });
 
 export type LoginFormState = {
@@ -91,8 +86,9 @@ export type LoginFormState = {
   errors?: {
     email?: string[];
     password?: string[];
-    _form?: string[]; // For general form errors
+    _form?: string[];
   };
+  user?: SimulatedUser; // Return user object on success
   redirectTo?: string;
 };
 
@@ -111,15 +107,11 @@ export async function loginUserAction(
 
   const { email, password } = validatedFields.data;
 
-  // --- Simulate User Authentication ---
   console.log('Server Action: Attempting to log in user:');
   console.log('Email:', email);
-  // console.log('Password:', password); // In a real app, never log the raw password.
 
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Check against in-memory store first
   const foundUserInStore = simulatedUsersStore.find(
     user => user.email.toLowerCase() === email.toLowerCase() && user.password === password
   );
@@ -128,24 +120,94 @@ export async function loginUserAction(
     return {
       success: true,
       message: `Login successful! Welcome back, ${foundUserInStore.name}. Redirecting...`,
-      redirectTo: "/" // Or a dashboard page
+      user: foundUserInStore, // Return the found user object
+      redirectTo: "/"
     };
   }
 
-  // Simulated successful login for hardcoded test user
-  if (email.toLowerCase() === "test@example.com" && password === "password123") {
+  const hardcodedTestUser: SimulatedUser = { email: "test@example.com", password: "password123", name: "Test User", phone: "1234567890", address: "123 Test St" };
+  if (email.toLowerCase() === hardcodedTestUser.email && password === hardcodedTestUser.password) {
+    // Ensure test user is in store if not already (e.g. after server restart)
+    if(!simulatedUsersStore.find(u => u.email.toLowerCase() === hardcodedTestUser.email)) {
+      simulatedUsersStore.push(hardcodedTestUser);
+    }
     return {
       success: true,
       message: "Login successful! Redirecting...",
-      redirectTo: "/" // Or a dashboard page
+      user: hardcodedTestUser, // Return the hardcoded user object
+      redirectTo: "/"
     };
   }
 
-  // Simulated failed login
   return {
     success: false,
     message: "Invalid email or password.",
     errors: { _form: ["Invalid email or password. Please try again."] }
   };
-  // --- End Simulation ---
+}
+
+// --- Profile Update Schemas and Action ---
+const serverProfileUpdateSchema = z.object({
+  userId: z.string().email(), // Using email as userId for simulation
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }).regex(/^\+?[0-9\s-()]+$/, 'Invalid phone number format.'),
+  address: z.string().optional(),
+});
+
+export type ProfileUpdateFormState = {
+  success: boolean;
+  message?: string;
+  errors?: {
+    name?: string[];
+    phone?: string[];
+    address?: string[];
+    _form?: string[];
+  };
+  user?: SimulatedUser;
+};
+
+export async function updateUserProfileAction(
+  formData: z.infer<typeof serverProfileUpdateSchema>
+): Promise<ProfileUpdateFormState> {
+  const validatedFields = serverProfileUpdateSchema.safeParse(formData);
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the form.",
+    };
+  }
+
+  const { userId, name, phone, address } = validatedFields.data;
+
+  console.log('Server Action: Attempting to update profile for user:', userId);
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const userIndex = simulatedUsersStore.findIndex(user => user.email.toLowerCase() === userId.toLowerCase());
+
+  if (userIndex === -1) {
+    return {
+      success: false,
+      message: "User not found.",
+      errors: { _form: ["User not found."] }
+    };
+  }
+
+  // Update user details (keep existing password)
+  simulatedUsersStore[userIndex] = {
+    ...simulatedUsersStore[userIndex],
+    name,
+    phone,
+    address: address || '', // Ensure address is a string
+  };
+
+  console.log('Updated user:', simulatedUsersStore[userIndex]);
+
+  return {
+    success: true,
+    message: "Profile updated successfully!",
+    user: simulatedUsersStore[userIndex],
+  };
 }

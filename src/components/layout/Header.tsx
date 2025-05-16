@@ -2,12 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus, Shield, LogOut, Loader2 } from 'lucide-react';
+import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus, Shield, LogOut, UserCircle, Loader2 } from 'lucide-react';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the auth hook
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
 
 const navLinks = [
   { href: '/', label: 'Home', icon: Home },
@@ -19,7 +19,7 @@ const navLinks = [
 
 const Header = () => {
   const isMobile = useIsMobile();
-  const { isLoggedIn, logoutAction, isLoadingAuth } = useSimulatedAuth();
+  const { isLoggedIn, logoutAction, isLoadingAuth, currentUser } = useSimulatedAuth();
 
   const NavItems = ({ isSheet = false }: { isSheet?: boolean }) => (
     <>
@@ -48,11 +48,18 @@ const Header = () => {
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : isLoggedIn ? (
-        <SheetClose asChild>
-          <Button onClick={logoutAction} variant="ghost" className="w-full justify-start text-lg py-2 px-3">
-            <LogOut className="h-5 w-5 mr-2" /> Logout
-          </Button>
-        </SheetClose>
+        <>
+          <SheetClose asChild>
+            <Link href="/profile" className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
+                <UserCircle className="h-5 w-5" /> Profile
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Button onClick={logoutAction} variant="ghost" className="w-full justify-start text-lg py-2 px-3">
+              <LogOut className="h-5 w-5 mr-2" /> Logout
+            </Button>
+          </SheetClose>
+        </>
       ) : (
         <>
           <SheetClose asChild>
@@ -87,9 +94,16 @@ const Header = () => {
             <Loader2 className="animate-spin h-4 w-4" />
           </Button>
       ) : isLoggedIn ? (
-        <Button onClick={logoutAction} variant="outline" size="sm">
-          <LogOut className="mr-1 h-4 w-4" /> Logout
-        </Button>
+        <>
+          <Link href="/profile">
+            <Button variant="ghost" size="sm">
+              <UserCircle className="mr-1 h-4 w-4" /> {currentUser?.name ? currentUser.name.split(' ')[0] : 'Profile'}
+            </Button>
+          </Link>
+          <Button onClick={logoutAction} variant="outline" size="sm">
+            <LogOut className="mr-1 h-4 w-4" /> Logout
+          </Button>
+        </>
       ) : (
         <>
           <Link href="/login">
@@ -103,20 +117,16 @@ const Header = () => {
     </>
   );
 
-
-  // Initial render with placeholder for mobile menu button if not mounted
-  // This is simplified from the original as useIsMobile handles client-side rendering check
-   if (isLoadingAuth && isMobile === undefined) { // isMobile undefined means it hasn't run client-side yet
+   if (isLoadingAuth && isMobile === undefined) {
     return (
       <header className="bg-card shadow-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Logo />
-          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div> {/* Placeholder for menu button */}
+          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div>
         </div>
       </header>
     );
   }
-
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-50">

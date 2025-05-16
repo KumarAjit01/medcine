@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LogIn, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { loginUserAction, type LoginFormState } from '@/app/actions/auth';
-import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the hook
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -34,7 +34,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { loginAction: simulateLogin } = useSimulatedAuth(); // Get the login function from the hook
+  const { loginAction: storeUserAuthData } = useSimulatedAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -51,8 +51,8 @@ export default function LoginPage() {
     const result: LoginFormState = await loginUserAction(data);
     setIsLoading(false);
 
-    if (result.success) {
-      simulateLogin(); // Set the simulated login state
+    if (result.success && result.user) {
+      storeUserAuthData(result.user); // Store user details in localStorage via hook
       toast({
         title: "Login Successful!",
         description: result.message,
@@ -61,7 +61,7 @@ export default function LoginPage() {
       if (result.redirectTo) {
         router.push(result.redirectTo);
       } else {
-        router.push('/'); // Fallback redirect
+        router.push('/');
       }
     } else {
       if (result.errors) {
