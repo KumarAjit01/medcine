@@ -2,12 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus, Shield } from 'lucide-react';
+import { Menu, ShoppingCart, X, Home, ListTree, UploadCloud, Bot, LogIn, UserPlus, Shield, LogOut, Loader2 } from 'lucide-react';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile'; // Assuming useIsMobile hook exists
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the auth hook
 
 const navLinks = [
   { href: '/', label: 'Home', icon: Home },
@@ -19,22 +19,7 @@ const navLinks = [
 
 const Header = () => {
   const isMobile = useIsMobile();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <header className="bg-card shadow-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Logo />
-          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div> {/* Placeholder for menu button */}
-        </div>
-      </header>
-    );
-  }
+  const { isLoggedIn, logoutAction, isLoadingAuth } = useSimulatedAuth();
 
   const NavItems = ({ isSheet = false }: { isSheet?: boolean }) => (
     <>
@@ -55,6 +40,84 @@ const Header = () => {
     </>
   );
 
+  const AuthButtonsMobile = () => (
+    <>
+      <hr className="my-2 border-border" />
+      {isLoadingAuth ? (
+        <div className="flex items-center justify-center py-2 px-3 text-lg">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      ) : isLoggedIn ? (
+        <SheetClose asChild>
+          <Button onClick={logoutAction} variant="ghost" className="w-full justify-start text-lg py-2 px-3">
+            <LogOut className="h-5 w-5 mr-2" /> Logout
+          </Button>
+        </SheetClose>
+      ) : (
+        <>
+          <SheetClose asChild>
+            <Link href="/login" className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
+              <LogIn className="h-5 w-5" /> Login
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Link href="/signup" className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
+              <UserPlus className="h-5 w-5" /> Sign Up
+            </Link>
+          </SheetClose>
+        </>
+      )}
+      <SheetClose asChild>
+        <Button variant="ghost" className="w-full justify-start mt-4 text-lg">
+          <ShoppingCart className="h-5 w-5 mr-2" /> Cart (Not Implemented)
+        </Button>
+      </SheetClose>
+    </>
+  );
+
+  const AuthButtonsDesktop = () => (
+    <>
+      <Button variant="ghost" size="icon" asChild>
+        <Link href="/cart" aria-label="Shopping Cart">
+          <ShoppingCart className="h-5 w-5" />
+        </Link>
+      </Button>
+      {isLoadingAuth ? (
+         <Button variant="outline" size="sm" disabled>
+            <Loader2 className="animate-spin h-4 w-4" />
+          </Button>
+      ) : isLoggedIn ? (
+        <Button onClick={logoutAction} variant="outline" size="sm">
+          <LogOut className="mr-1 h-4 w-4" /> Logout
+        </Button>
+      ) : (
+        <>
+          <Link href="/login">
+            <Button variant="outline" size="sm">Login</Button>
+          </Link>
+          <Link href="/signup">
+            <Button variant="default" size="sm">Sign Up</Button>
+          </Link>
+        </>
+      )}
+    </>
+  );
+
+
+  // Initial render with placeholder for mobile menu button if not mounted
+  // This is simplified from the original as useIsMobile handles client-side rendering check
+   if (isLoadingAuth && isMobile === undefined) { // isMobile undefined means it hasn't run client-side yet
+    return (
+      <header className="bg-card shadow-md sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Logo />
+          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div> {/* Placeholder for menu button */}
+        </div>
+      </header>
+    );
+  }
+
+
   return (
     <header className="bg-card shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -69,39 +132,14 @@ const Header = () => {
             <SheetContent side="right" className="w-[280px] p-6">
               <div className="flex flex-col gap-4">
                 <NavItems isSheet={true} />
-                <hr className="my-2 border-border" />
-                <SheetClose asChild>
-                  <Link href="/login" className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
-                    <LogIn className="h-5 w-5" /> Login
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="/signup" className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
-                    <UserPlus className="h-5 w-5" /> Sign Up
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Button variant="ghost" className="w-full justify-start mt-4 text-lg">
-                    <ShoppingCart className="h-5 w-5 mr-2" /> Cart
-                  </Button>
-                </SheetClose>
+                <AuthButtonsMobile />
               </div>
             </SheetContent>
           </Sheet>
         ) : (
           <nav className="flex items-center gap-2">
             <NavItems />
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/cart" aria-label="Shopping Cart">
-                <ShoppingCart className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Link href="/login">
-              <Button variant="outline" size="sm">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button variant="default" size="sm">Sign Up</Button>
-            </Link>
+            <AuthButtonsDesktop />
           </nav>
         )}
       </div>

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,21 +18,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { LogIn, Loader2 } from 'lucide-react'; // Import Loader2
+import { LogIn, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { loginUserAction, type LoginFormState } from '@/app/actions/auth';
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the hook
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }), // Client-side validation
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { loginAction: simulateLogin } = useSimulatedAuth(); // Get the login function from the hook
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -44,12 +46,13 @@ export default function LoginPage() {
 
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
-    form.clearErrors(); // Clear previous server errors
+    form.clearErrors();
 
     const result: LoginFormState = await loginUserAction(data);
     setIsLoading(false);
 
     if (result.success) {
+      simulateLogin(); // Set the simulated login state
       toast({
         title: "Login Successful!",
         description: result.message,
@@ -57,10 +60,11 @@ export default function LoginPage() {
       form.reset();
       if (result.redirectTo) {
         router.push(result.redirectTo);
+      } else {
+        router.push('/'); // Fallback redirect
       }
     } else {
       if (result.errors) {
-        // Set field-specific errors
         (Object.keys(result.errors) as Array<keyof NonNullable<LoginFormState['errors']>>).forEach((key) => {
           const fieldKey = key as keyof LoginFormValues | '_form';
           const errorMessages = result.errors![key];
@@ -70,7 +74,6 @@ export default function LoginPage() {
             }
           }
         });
-        // Display general form error as a toast if present
         if (result.errors._form) {
           toast({
             title: "Login Failed",

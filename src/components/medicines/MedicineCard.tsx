@@ -1,15 +1,33 @@
+
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Medicine } from '@/lib/mockData';
-import { Tag, ShoppingCart } from 'lucide-react';
+import { Tag, ShoppingCart, LogIn, Loader2 } from 'lucide-react';
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
 
 interface MedicineCardProps {
   medicine: Medicine;
 }
 
 const MedicineCard = ({ medicine }: MedicineCardProps) => {
+  const router = useRouter();
+  const { isLoggedIn, isLoadingAuth } = useSimulatedAuth();
+
+  const handleAddToCartClick = () => {
+    if (!isLoggedIn) {
+      router.push('/login?redirect=/medicines'); // Optionally pass a redirect URL
+    } else {
+      // TODO: Implement actual add to cart logic
+      console.log(`Adding ${medicine.name} to cart`);
+      // Example: toast({ title: `${medicine.name} added to cart` });
+    }
+  };
+
   return (
     <Card className="overflow-hidden h-full flex flex-col group transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary">
       <CardHeader className="p-0">
@@ -36,9 +54,29 @@ const MedicineCard = ({ medicine }: MedicineCardProps) => {
         <p className="text-xl font-semibold text-primary">${medicine.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 border-t">
-        <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-        </Button>
+        {isLoadingAuth ? (
+          <Button variant="outline" className="w-full" disabled>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...
+          </Button>
+        ) : isLoggedIn ? (
+          <Button 
+            variant="outline" 
+            className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+            onClick={handleAddToCartClick}
+            disabled={medicine.stock === 0}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" /> 
+            {medicine.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+            onClick={handleAddToCartClick}
+          >
+            <LogIn className="mr-2 h-4 w-4" /> Login to Add
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

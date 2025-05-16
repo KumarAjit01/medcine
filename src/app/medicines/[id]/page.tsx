@@ -1,24 +1,64 @@
+
+'use client'; // Required for hooks like useRouter and useSimulatedAuth
+
 import { mockMedicines } from '@/lib/mockData';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation'; // Import useRouter
 import PageTitle from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Pill, ShoppingCart, Tag, PackageCheck } from 'lucide-react';
+import { Pill, ShoppingCart, Tag, PackageCheck, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the hook
+import { useEffect, useState } from 'react';
+import type { Medicine } from '@/lib/mockData';
 
-export async function generateStaticParams() {
-  return mockMedicines.map((medicine) => ({
-    id: medicine.id,
-  }));
-}
+// generateStaticParams needs to be outside the component if it's used for SSG
+// For client components with dynamic data fetching, this might not be necessary or might work differently.
+// However, since we are using mockData, we can keep it for now if some routes are pre-rendered.
+// export async function generateStaticParams() {
+//   return mockMedicines.map((medicine) => ({
+//     id: medicine.id,
+//   }));
+// }
+// For a fully client-rendered approach or dynamic fetching, generateStaticParams might not be used.
+// Let's assume for now it might still be used for initial builds.
 
 export default function MedicineDetailPage({ params }: { params: { id: string } }) {
-  const medicine = mockMedicines.find((m) => m.id === params.id);
+  const router = useRouter();
+  const { isLoggedIn, isLoadingAuth } = useSimulatedAuth();
+  const [medicine, setMedicine] = useState<Medicine | undefined>(undefined);
+
+  useEffect(() => {
+    const foundMedicine = mockMedicines.find((m) => m.id === params.id);
+    if (foundMedicine) {
+      setMedicine(foundMedicine);
+    } else {
+      notFound();
+    }
+  }, [params.id]);
+
+  const handleAddToCartClick = () => {
+    if (!isLoggedIn) {
+      router.push(`/login?redirect=/medicines/${params.id}`);
+    } else {
+      // TODO: Implement actual add to cart logic
+      if (medicine) {
+        console.log(`Adding ${medicine.name} to cart`);
+        // Example: toast({ title: `${medicine.name} added to cart` });
+      }
+    }
+  };
 
   if (!medicine) {
-    notFound();
+    // Still loading medicine or not found (notFound() would have been called by useEffect)
+    // You could show a more specific loading state for the medicine data itself here
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -59,10 +99,29 @@ export default function MedicineDetailPage({ params }: { params: { id: string } 
               </div>
             </CardContent>
             <CardFooter className="p-6 border-t">
-              <Button size="lg" className="w-full" disabled={medicine.stock === 0}>
-                <ShoppingCart className="mr-2 h-5 w-5" /> 
-                {medicine.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-              </Button>
+              {isLoadingAuth ? (
+                <Button size="lg" className="w-full" disabled>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading...
+                </Button>
+              ) : isLoggedIn ? (
+                <Button 
+                  size="lg" 
+                  className="w-full" 
+                  onClick={handleAddToCartClick}
+                  disabled={medicine.stock === 0}
+                >
+                  <ShoppingCart className="mr-2 h-5 w-5" /> 
+                  {medicine.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                </Button>
+              ) : (
+                <Button 
+                  size="lg" 
+                  className="w-full"
+                  onClick={handleAddToCartClick}
+                >
+                  <LogIn className="mr-2 h-5 w-5" /> Login to Add to Cart
+                </Button>
+              )}
             </CardFooter>
           </div>
         </div>
