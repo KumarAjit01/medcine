@@ -3,13 +3,21 @@
 
 import * as z from 'zod';
 
-// --- Signup Schemas and Action ---
-const serverSignupSchema = z.object({
+// --- In-memory store for simulated users (Resets on server restart) ---
+const serverSignupDataSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }).regex(/^\+?[0-9\s-()]+$/, 'Invalid phone number format.'),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
+type SimulatedUser = z.infer<typeof serverSignupDataSchema>;
+let simulatedUsersStore: SimulatedUser[] = [];
+
+// --- Signup Schemas and Action ---
+const serverSignupSchema = serverSignupDataSchema.extend({
+  // No need to extend if serverSignupDataSchema already has all fields for storage
+});
+
 
 export type SignupFormState = {
   success: boolean;
@@ -45,24 +53,21 @@ export async function signupUserAction(
   console.log('Phone:', phone);
   // console.log('Password:', password); // In a real app, never log the raw password.
 
-  // In a real application, you would:
-  // 1. Hash the password securely (e.g., using bcrypt).
-  // 2. Create the user in your authentication system (e.g., Firebase Authentication).
-  //    const hashedPassword = await bcrypt.hash(password, 10);
-  //    await firebaseAdmin.auth().createUser({ email, password: hashedPassword, displayName: name });
-  // 3. Save additional user information (like phone number) to a database (e.g., Firestore) linked to the user's ID.
-
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
 
-  // Simulate a potential error (e.g., email already exists)
-  if (email.toLowerCase() === "exists@example.com") {
+  // Check if email already exists in store or is the hardcoded existing email
+  if (email.toLowerCase() === "exists@example.com" || simulatedUsersStore.find(user => user.email.toLowerCase() === email.toLowerCase())) {
     return {
       success: false,
       message: "This email address is already registered.",
       errors: { email: ["This email address is already registered."] }
     };
   }
+
+  // Add user to our in-memory store
+  simulatedUsersStore.push({ name, email, phone, password });
+  console.log('Current simulated users:', simulatedUsersStore.map(u => u.email));
   // --- End Simulation ---
 
   return { success: true, message: `Welcome, ${name}! Your account has been created successfully. You can now log in.` };
@@ -107,14 +112,22 @@ export async function loginUserAction(
   // console.log('Password:', password); // In a real app, never log the raw password.
 
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
 
-  // In a real application, you would:
-  // 1. Fetch user data from your database by email.
-  // 2. Compare the provided password with the stored hashed password (e.g., using bcrypt.compare).
-  // 3. If credentials match, create a session/token.
+  // Check against in-memory store first
+  const foundUserInStore = simulatedUsersStore.find(
+    user => user.email.toLowerCase() === email.toLowerCase() && user.password === password
+  );
 
-  // Simulated successful login
+  if (foundUserInStore) {
+    return {
+      success: true,
+      message: `Login successful! Welcome back, ${foundUserInStore.name}. Redirecting...`,
+      redirectTo: "/" // Or a dashboard page
+    };
+  }
+
+  // Simulated successful login for hardcoded test user
   if (email.toLowerCase() === "test@example.com" && password === "password123") {
     return {
       success: true,
