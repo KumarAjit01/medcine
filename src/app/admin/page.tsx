@@ -15,10 +15,10 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'User Management',
-      description: 'View and manage user accounts (Placeholder).',
-      link: '#',
+      description: 'View and manage user accounts.',
+      link: '/admin/users',
       icon: Users,
-      disabled: true,
+      disabled: false, 
     },
     {
       title: 'Product Catalog',
@@ -62,3 +62,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
