@@ -123,7 +123,7 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <UserPlus className="mx-auto h-12 w-12 text-primary mb-2" />
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join PillPal today for a healthier tomorrow.</CardDescription>
+          <CardDescription>Join the Online Medicine Ordering System today for a healthier tomorrow.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

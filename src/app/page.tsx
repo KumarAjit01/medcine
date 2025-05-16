@@ -17,7 +17,7 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto">
           <Pill className="h-16 w-16 text-primary mx-auto mb-4" />
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Welcome to PillPal
+            Welcome to the Online Medicine Ordering System
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8">
             Your trusted partner for easy and reliable access to medicines and healthcare products.

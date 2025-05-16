@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'PillPal - Your Health Companion',
+  title: 'Online Medicine Ordering System - Your Health Companion',
   description: 'Your friendly online pharmacy for all your medical needs.',
 };
 

@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <PageTitle title="Admin Dashboard" subtitle="Manage your PillPal application." icon={LayoutDashboard} />
+      <PageTitle title="Admin Dashboard" subtitle="Manage your Online Medicine Ordering System." icon={LayoutDashboard} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {adminFeatures.map((feature) => (

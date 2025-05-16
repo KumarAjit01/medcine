@@ -109,7 +109,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-          <CardDescription>Log in to your PillPal account.</CardDescription>
+          <CardDescription>Log in to your Online Medicine Ordering System account.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
