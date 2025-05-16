@@ -13,6 +13,8 @@ import { ShoppingCart, Trash2, Minus, Plus, CreditCard, Truck, Loader2 } from 'l
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Added import
+import { useToast } from "@/hooks/use-toast"; // Added import
 
 interface CartDisplayItem extends Medicine {
   quantity: number;
@@ -20,8 +22,10 @@ interface CartDisplayItem extends Medicine {
 }
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateCartItemQuantity, isLoadingAuth, isLoggedIn } = useSimulatedAuth();
+  const { cartItems, removeFromCart, updateCartItemQuantity, isLoadingAuth, isLoggedIn, currentUser, clearCart } = useSimulatedAuth();
   const [isProcessingOrder, setIsProcessingOrder] = useState(false); // For simulated order placement
+  const router = useRouter(); // Added router
+  const { toast } = useToast(); // Added toast
 
   const detailedCartItems: CartDisplayItem[] = useMemo(() => {
     return cartItems
@@ -47,21 +51,33 @@ export default function CartPage() {
   const cartTotal = cartSubtotal + shippingCost;
 
   const handleQuantityChange = (medicineId: string, newQuantity: number) => {
-    if (newQuantity >= 0) { // Allow setting to 0 to effectively remove via update logic
+    if (newQuantity >= 0) { 
       updateCartItemQuantity(medicineId, newQuantity);
     }
   };
   
   const handleProceedToCheckout = () => {
-    // For now, this will just simulate and perhaps clear the cart
-    // In a real app, it would navigate to /checkout
+    if (!currentUser || !currentUser.address || currentUser.address.trim() === '') {
+      toast({
+        title: "Address Required",
+        description: "Please add a delivery address to your profile before proceeding to checkout.",
+        variant: "destructive",
+      });
+      router.push('/profile?redirect=/cart'); // Redirect to profile, optionally pass redirect back to cart
+      return;
+    }
+
     console.log("Proceeding to checkout with items:", detailedCartItems);
-    // router.push('/checkout'); // This would be the next step
     setIsProcessingOrder(true);
+    // Simulate order placement
     setTimeout(() => {
-        // clearCart(); // Optionally clear cart after "order"
-        alert("Simulated order placed! You would be redirected to a payment gateway or order confirmation page.");
+        clearCart(); 
+        toast({
+          title: "Order Placed (Simulated!)",
+          description: "Your order has been successfully placed. You would normally be redirected to payment.",
+        });
         setIsProcessingOrder(false);
+        router.push('/'); // Redirect to homepage after simulated order
     }, 1500);
   };
 
@@ -222,4 +238,3 @@ export default function CartPage() {
     </div>
   );
 }
-
