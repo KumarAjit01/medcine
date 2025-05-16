@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
+import { Badge } from '@/components/ui/badge'; // Import Badge
 
 const navLinks = [
   { href: '/', label: 'Home', icon: Home },
@@ -19,7 +20,9 @@ const navLinks = [
 
 const Header = () => {
   const isMobile = useIsMobile();
-  const { isLoggedIn, logoutAction, isLoadingAuth, currentUser } = useSimulatedAuth();
+  const { isLoggedIn, logoutAction, isLoadingAuth, currentUser, cartItems } = useSimulatedAuth();
+
+  const totalCartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const NavItems = ({ isSheet = false }: { isSheet?: boolean }) => (
     <>
@@ -39,6 +42,22 @@ const Header = () => {
       ))}
     </>
   );
+
+  const CartButtonContent = ({ isSheet = false }: {isSheet?: boolean}) => (
+    <>
+      <ShoppingCart className={`h-5 w-5 ${isSheet ? 'mr-2' : ''}`} />
+      {isSheet && 'Cart'}
+      {totalCartQuantity > 0 && (
+        <Badge 
+            variant="destructive" 
+            className={`absolute ${isSheet ? 'right-2 top-2' : '-right-2 -top-2'} text-xs px-1.5 py-0.5 h-auto leading-tight`} // Adjusted badge styling
+        >
+            {totalCartQuantity}
+        </Badge>
+      )}
+    </>
+  );
+
 
   const AuthButtonsMobile = () => (
     <>
@@ -75,8 +94,10 @@ const Header = () => {
         </>
       )}
       <SheetClose asChild>
-        <Button variant="ghost" className="w-full justify-start mt-4 text-lg">
-          <ShoppingCart className="h-5 w-5 mr-2" /> Cart (Not Implemented)
+        <Button variant="ghost" asChild className="w-full justify-start mt-4 text-lg relative">
+           <Link href="/cart" className="flex items-center gap-2">
+            <CartButtonContent isSheet={true}/>
+          </Link>
         </Button>
       </SheetClose>
     </>
@@ -84,9 +105,9 @@ const Header = () => {
 
   const AuthButtonsDesktop = () => (
     <>
-      <Button variant="ghost" size="icon" asChild>
+      <Button variant="ghost" size="icon" asChild className="relative">
         <Link href="/cart" aria-label="Shopping Cart">
-          <ShoppingCart className="h-5 w-5" />
+          <CartButtonContent />
         </Link>
       </Button>
       {isLoadingAuth ? (
@@ -122,7 +143,7 @@ const Header = () => {
       <header className="bg-card shadow-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Logo />
-          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div>
+          <div className="h-8 w-8 bg-muted rounded animate-pulse md:hidden"></div> {/* Skeleton for mobile menu button */}
         </div>
       </header>
     );

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import type { Medicine } from '@/lib/mockData';
 import { Tag, ShoppingCart, LogIn, Loader2 } from 'lucide-react';
 import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -16,15 +17,19 @@ interface MedicineCardProps {
 
 const MedicineCard = ({ medicine }: MedicineCardProps) => {
   const router = useRouter();
-  const { isLoggedIn, isLoadingAuth } = useSimulatedAuth();
+  const auth = useSimulatedAuth(); // Renamed for clarity
+  const { toast } = useToast();
 
   const handleAddToCartClick = () => {
-    if (!isLoggedIn) {
-      router.push('/login?redirect=/medicines'); // Optionally pass a redirect URL
+    if (!auth.isLoggedIn) {
+      router.push('/login?redirect=/medicines');
     } else {
-      // TODO: Implement actual add to cart logic
-      console.log(`Adding ${medicine.name} to cart`);
-      // Example: toast({ title: `${medicine.name} added to cart` });
+      auth.addToCart(medicine.id);
+      toast({
+        title: "Added to Cart!",
+        description: `${medicine.name} has been added to your cart.`,
+      });
+      router.push('/'); // Redirect to homepage as requested
     }
   };
 
@@ -54,11 +59,11 @@ const MedicineCard = ({ medicine }: MedicineCardProps) => {
         <p className="text-xl font-semibold text-primary">${medicine.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 border-t">
-        {isLoadingAuth ? (
+        {auth.isLoadingAuth ? (
           <Button variant="outline" className="w-full" disabled>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...
           </Button>
-        ) : isLoggedIn ? (
+        ) : auth.isLoggedIn ? (
           <Button 
             variant="outline" 
             className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
@@ -72,7 +77,7 @@ const MedicineCard = ({ medicine }: MedicineCardProps) => {
           <Button 
             variant="outline" 
             className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-            onClick={handleAddToCartClick}
+            onClick={handleAddToCartClick} // This will redirect to login if not logged in
           >
             <LogIn className="mr-2 h-4 w-4" /> Login to Add
           </Button>
