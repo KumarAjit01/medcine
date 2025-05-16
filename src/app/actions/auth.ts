@@ -29,6 +29,7 @@ export type SignupFormState = {
     password?: string[];
     _form?: string[]; // For general form errors not specific to a field
   };
+  redirectTo?: string; // Added for auto-login redirect
 };
 
 export async function signupUserAction(
@@ -70,7 +71,11 @@ export async function signupUserAction(
   console.log('Current simulated users:', simulatedUsersStore.map(u => u.email));
   // --- End Simulation ---
 
-  return { success: true, message: `Welcome, ${name}! Your account has been created successfully. You can now log in.` };
+  return { 
+    success: true, 
+    message: `Welcome, ${name}! Your account has been created. Redirecting...`,
+    redirectTo: "/" // Redirect to homepage after successful signup
+  };
 }
 
 

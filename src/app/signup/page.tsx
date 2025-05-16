@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,6 +21,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 import { signupUserAction, type SignupFormState } from '@/app/actions/auth';
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Import the auth hook
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -36,6 +38,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
+  const { loginAction: simulateLogin } = useSimulatedAuth(); // Get simulated login function
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -60,15 +64,17 @@ export default function SignupPage() {
     setIsLoading(false);
 
     if (result.success) {
+      simulateLogin(); // Set the simulated login state
       toast({
         title: "Signup Successful!",
         description: result.message,
       });
       form.reset(); // Reset form on success
-      // Optionally, you could redirect the user here:
-      // import { useRouter } from 'next/navigation';
-      // const router = useRouter();
-      // router.push('/login');
+      if (result.redirectTo) {
+        router.push(result.redirectTo); // Redirect if redirectTo is present
+      } else {
+        router.push('/login'); // Fallback redirect to login if not specified
+      }
     } else {
       // Handle errors returned from the server action
       if (result.errors) {
