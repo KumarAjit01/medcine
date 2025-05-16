@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,21 +70,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Prescription Upload Call to Action */}
-      <section className="bg-secondary/50 dark:bg-secondary/20 rounded-lg p-8 shadow">
-        <div className="text-center max-w-xl mx-auto">
-          <Image src="https://placehold.co/150x100.png" alt="Prescription" width={150} height={100} className="mx-auto mb-4 rounded" data-ai-hint="prescription document" />
-          <h2 className="text-2xl font-semibold text-secondary-foreground mb-3">Have a Prescription?</h2>
-          <p className="text-muted-foreground mb-6">
-            Easily upload your prescription to order restricted medicines. Our team will verify it swiftly.
-          </p>
-          <Link href="/prescriptions/upload">
-            <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Upload Prescription
-            </Button>
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }
