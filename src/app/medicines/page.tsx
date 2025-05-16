@@ -1,3 +1,4 @@
+
 import MedicineCard from '@/components/medicines/MedicineCard';
 import PageTitle from '@/components/shared/PageTitle';
 import { mockMedicines, mockCategories } from '@/lib/mockData';
@@ -5,6 +6,8 @@ import { ListTree, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+
+const ALL_CATEGORIES_VALUE = "_all_"; // Define a constant for clarity
 
 export default function MedicinesPage({
   searchParams,
@@ -15,16 +18,28 @@ export default function MedicinesPage({
   const searchTerm = searchParams?.search?.toLowerCase() || '';
 
   const filteredMedicines = mockMedicines.filter(medicine => {
-    const categoryMatch = selectedCategory ? medicine.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory : true;
-    const searchMatch = searchTerm ? medicine.name.toLowerCase().includes(searchTerm) || medicine.description.toLowerCase().includes(searchTerm) || medicine.category.toLowerCase().includes(searchTerm) : true;
+    const categoryMatch = 
+      !selectedCategory || selectedCategory === ALL_CATEGORIES_VALUE
+        ? true
+        : medicine.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory;
+    
+    const searchMatch = searchTerm 
+      ? medicine.name.toLowerCase().includes(searchTerm) || 
+        medicine.description.toLowerCase().includes(searchTerm) || 
+        medicine.category.toLowerCase().includes(searchTerm) 
+      : true;
+      
     return categoryMatch && searchMatch;
   });
   
-  // For simplicity, assume category names in mockCategories match medicine.category or can be mapped.
-  // Here, we're filtering by category ID passed in URL which matches mockCategories.id.
-  // A more robust solution would involve matching category names or having explicit category IDs in medicines.
-  const currentCategory = mockCategories.find(cat => cat.id === selectedCategory);
-  const pageSubtitle = currentCategory ? `Showing medicines in ${currentCategory.name}` : "Browse our extensive selection";
+  const currentCategory = 
+    selectedCategory && selectedCategory !== ALL_CATEGORIES_VALUE 
+      ? mockCategories.find(cat => cat.id === selectedCategory) 
+      : undefined;
+      
+  const pageSubtitle = currentCategory 
+    ? `Showing medicines in ${currentCategory.name}` 
+    : "Browse our extensive selection";
 
   return (
     <div className="space-y-8">
@@ -45,12 +60,13 @@ export default function MedicinesPage({
           </div>
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-foreground mb-1">Filter by Category</label>
-            <Select name="category" defaultValue={selectedCategory}>
+            {/* Use selectedCategory || ALL_CATEGORIES_VALUE for defaultValue to ensure "All Categories" is selected if no category is in URL */}
+            <Select name="category" defaultValue={selectedCategory || ALL_CATEGORIES_VALUE}>
               <SelectTrigger id="category" className="py-3">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value={ALL_CATEGORIES_VALUE}>All Categories</SelectItem>
                 {mockCategories.map(category => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
