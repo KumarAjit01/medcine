@@ -3,7 +3,7 @@
 
 import * as z from 'zod';
 
-// This schema is for data validation within the server action.
+// --- Signup Schemas and Action ---
 const serverSignupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -66,4 +66,68 @@ export async function signupUserAction(
   // --- End Simulation ---
 
   return { success: true, message: `Welcome, ${name}! Your account has been created successfully. You can now log in.` };
+}
+
+
+// --- Login Schemas and Action ---
+const serverLoginSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address.' }),
+  password: z.string().min(1, { message: 'Password cannot be empty.' }), // Min 1 for presence, actual length check by auth system
+});
+
+export type LoginFormState = {
+  success: boolean;
+  message?: string;
+  errors?: {
+    email?: string[];
+    password?: string[];
+    _form?: string[]; // For general form errors
+  };
+  redirectTo?: string;
+};
+
+export async function loginUserAction(
+  formData: z.infer<typeof serverLoginSchema>
+): Promise<LoginFormState> {
+  const validatedFields = serverLoginSchema.safeParse(formData);
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check your input.",
+    };
+  }
+
+  const { email, password } = validatedFields.data;
+
+  // --- Simulate User Authentication ---
+  console.log('Server Action: Attempting to log in user:');
+  console.log('Email:', email);
+  // console.log('Password:', password); // In a real app, never log the raw password.
+
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // In a real application, you would:
+  // 1. Fetch user data from your database by email.
+  // 2. Compare the provided password with the stored hashed password (e.g., using bcrypt.compare).
+  // 3. If credentials match, create a session/token.
+
+  // Simulated successful login
+  if (email.toLowerCase() === "test@example.com" && password === "password123") {
+    return {
+      success: true,
+      message: "Login successful! Redirecting...",
+      redirectTo: "/" // Or a dashboard page
+    };
+  }
+
+  // Simulated failed login
+  return {
+    success: false,
+    message: "Invalid email or password.",
+    errors: { _form: ["Invalid email or password. Please try again."] }
+  };
+  // --- End Simulation ---
 }

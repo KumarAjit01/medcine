@@ -1,9 +1,12 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -15,20 +18,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import PageTitle from '@/components/shared/PageTitle';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react'; // Import Loader2
 import { useToast } from "@/hooks/use-toast";
-
+import { loginUserAction, type LoginFormState } from '@/app/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }), // Client-side validation
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -37,13 +42,62 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(data: LoginFormValues) {
-    console.log(data);
-    // TODO: Implement actual login logic
-    toast({
-      title: "Login Attempted",
-      description: "Login functionality is not yet implemented.",
-    });
+  async function onSubmit(data: LoginFormValues) {
+    setIsLoading(true);
+    form.clearErrors(); // Clear previous server errors
+
+    const result: LoginFormState = await loginUserAction(data);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast({
+        title: "Login Successful!",
+        description: result.message,
+      });
+      form.reset();
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+      }
+    } else {
+      if (result.errors) {
+        // Set field-specific errors
+        (Object.keys(result.errors) as Array<keyof NonNullable<LoginFormState['errors']>>).forEach((key) => {
+          const fieldKey = key as keyof LoginFormValues | '_form';
+          const errorMessages = result.errors![key];
+          if (errorMessages && fieldKey !== '_form') {
+            if (form.control._fields[fieldKey as keyof LoginFormValues]) {
+              form.setError(fieldKey as keyof LoginFormValues, { type: 'server', message: errorMessages.join(', ') });
+            }
+          }
+        });
+        // Display general form error as a toast if present
+        if (result.errors._form) {
+          toast({
+            title: "Login Failed",
+            description: result.errors._form.join(', '),
+            variant: "destructive",
+          });
+        } else if (result.message && !Object.values(result.errors).some(e => e && e.length > 0)) {
+           toast({
+              title: "Login Failed",
+              description: result.message,
+              variant: "destructive",
+          });
+        }
+      } else if (result.message) {
+         toast({
+            title: "Login Failed",
+            description: result.message,
+            variant: "destructive",
+          });
+      } else {
+        toast({
+            title: "An unexpected error occurred",
+            description: "Please try again later.",
+            variant: "destructive",
+          });
+      }
+    }
   }
 
   return (
@@ -83,8 +137,14 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging In...
+                  </>
+                ) : (
+                  'Login'
+                )}
               </Button>
             </form>
           </Form>
