@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,9 +16,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import PageTitle from '@/components/shared/PageTitle';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { signupUserAction, type SignupFormState } from '@/app/actions/auth';
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -34,6 +36,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -45,13 +49,72 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(data: SignupFormValues) {
-    console.log(data);
-    // TODO: Implement actual signup logic
-     toast({
-      title: "Signup Attempted",
-      description: "Signup functionality is not yet implemented.",
-    });
+  async function onSubmit(data: SignupFormValues) {
+    setIsLoading(true);
+    form.clearErrors(); // Clear previous server errors
+
+    // Exclude confirmPassword before sending to the server action
+    const { confirmPassword, ...actionData } = data;
+
+    const result: SignupFormState = await signupUserAction(actionData);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast({
+        title: "Signup Successful!",
+        description: result.message,
+      });
+      form.reset(); // Reset form on success
+      // Optionally, you could redirect the user here:
+      // import { useRouter } from 'next/navigation';
+      // const router = useRouter();
+      // router.push('/login');
+    } else {
+      // Handle errors returned from the server action
+      if (result.errors) {
+        // Set field-specific errors
+        (Object.keys(result.errors) as Array<keyof NonNullable<SignupFormState['errors']>>).forEach((key) => {
+          const fieldKey = key as keyof SignupFormValues | '_form';
+          const errorMessages = result.errors![key];
+          if (errorMessages && fieldKey !== '_form') {
+             // Ensure fieldKey is a valid key of SignupFormValues before setting error
+            if (form.control._fields[fieldKey as keyof SignupFormValues]) {
+                form.setError(fieldKey as keyof SignupFormValues, { type: 'server', message: errorMessages.join(', ') });
+            } else {
+                 console.warn(`Attempted to set error on non-existent form field: ${String(fieldKey)}`);
+            }
+          }
+        });
+        // Display general form error as a toast if present
+        if (result.errors._form) {
+             toast({
+                title: "Signup Failed",
+                description: result.errors._form.join(', '),
+                variant: "destructive",
+            });
+        } else if (result.message && !Object.values(result.errors).some(e => e && e.length > 0)) {
+           // If there's a general message but no specific field errors that were handled above
+            toast({
+                title: "Signup Failed",
+                description: result.message,
+                variant: "destructive",
+            });
+        }
+      } else if (result.message) {
+         // Fallback for a general message if errors object is not present
+         toast({
+            title: "Signup Failed",
+            description: result.message,
+            variant: "destructive",
+          });
+      } else {
+        toast({
+            title: "An unexpected error occurred",
+            description: "Please try again later.",
+            variant: "destructive",
+          });
+      }
+    }
   }
 
   return (
@@ -130,8 +193,14 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Sign Up
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing Up...
+                  </>
+                ) : (
+                  'Sign Up'
+                )}
               </Button>
             </form>
           </Form>
