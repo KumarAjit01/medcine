@@ -4,7 +4,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
+import { useRouter } from 'next/navigation'; // Added useRouter
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -17,9 +18,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageTitle from '@/components/shared/PageTitle';
-import { UploadCloud, FileText, Loader2, CheckCircle } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, CheckCircle, ShieldAlert } from 'lucide-react'; // Added ShieldAlert
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added import
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useSimulatedAuth } from '@/hooks/useSimulatedAuth'; // Added useSimulatedAuth
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
@@ -40,21 +42,36 @@ type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
 
 export default function PrescriptionUploadPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { isLoadingAuth, isLoggedIn, isAdmin } = useSimulatedAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
   });
 
+  useEffect(() => {
+    if (!isLoadingAuth) {
+      if (!isLoggedIn || !isAdmin) {
+        toast({
+          title: "Access Denied",
+          description: "You do not have permission to view this page.",
+          variant: "destructive",
+        });
+        router.replace('/'); // Redirect to homepage if not admin
+      }
+    }
+  }, [isLoadingAuth, isLoggedIn, isAdmin, router, toast]);
+
   function onSubmit(data: PrescriptionFormValues) {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log('Prescription data:', data.prescriptionFile[0]);
     console.log('Notes:', data.notes);
 
     // Simulate API call
     setTimeout(() => {
-      setIsLoading(false);
+      setIsSubmitting(false);
       toast({
         title: "Prescription Uploaded (Simulated)",
         description: `${data.prescriptionFile[0].name} has been submitted for review.`,
@@ -65,15 +82,24 @@ export default function PrescriptionUploadPage() {
     }, 2000);
   }
 
+  if (isLoadingAuth || !isLoggedIn || !isAdmin) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[60vh] text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Verifying access...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl mx-auto space-y-8">
-      <PageTitle title="Upload Prescription" subtitle="Securely upload your medical prescription for verification." icon={UploadCloud} />
+      <PageTitle title="Upload Prescription (Admin)" subtitle="Securely upload medical prescriptions for record-keeping or review." icon={UploadCloud} />
 
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle>Prescription Details</CardTitle>
           <CardDescription>
-            Please upload a clear image or PDF of your prescription. Ensure all details are visible.
+            Please upload a clear image or PDF of the prescription. Ensure all details are visible.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,14 +138,14 @@ export default function PrescriptionUploadPage() {
                   <FormItem>
                     <FormLabel>Optional Notes</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Specific brand preference, quantity" {...field} />
+                      <Input placeholder="e.g., Patient ID, specific instructions" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Uploading...
@@ -134,11 +160,11 @@ export default function PrescriptionUploadPage() {
           </Form>
         </CardContent>
       </Card>
-       <Alert variant="default" className="mt-6">
-          <UploadCloud className="h-4 w-4" />
-          <AlertTitle>Processing Information</AlertTitle>
+       <Alert variant="default" className="mt-6 bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+          <ShieldAlert className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+          <AlertTitle className="text-blue-800 dark:text-blue-200">Admin Functionality</AlertTitle>
           <AlertDescription>
-            Your uploaded prescription will be reviewed by our pharmacy team. You will be notified once it's approved. This is a simulated process for MVP.
+            This prescription upload feature is intended for administrative use. Uploaded prescriptions are for simulated review.
           </AlertDescription>
         </Alert>
     </div>
