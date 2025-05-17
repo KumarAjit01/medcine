@@ -1,3 +1,4 @@
+
 export interface Medicine {
   id: string;
   name: string;
@@ -17,11 +18,20 @@ export interface Category {
   description?: string;
 }
 
+export type OrderStatus = 
+  | 'Pending' 
+  | 'Packing' 
+  | 'Processing' 
+  | 'Shipped' 
+  | 'Out for Delivery' 
+  | 'Delivered' 
+  | 'Cancelled';
+
 export interface Order {
   id: string;
   customerName: string;
   orderDate: string; // ISO date string e.g. "2023-10-26"
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: OrderStatus;
   totalAmount: number;
   itemCount: number;
 }
@@ -51,9 +61,9 @@ export const mockMedicines: Medicine[] = [
 export const mockOrders: Order[] = [
   { id: 'ORD001', customerName: 'Alice Smith', orderDate: '2024-07-15T10:30:00Z', status: 'Delivered', totalAmount: 45.98, itemCount: 3 },
   { id: 'ORD002', customerName: 'Bob Johnson', orderDate: '2024-07-16T14:00:00Z', status: 'Shipped', totalAmount: 25.50, itemCount: 1 },
-  { id: 'ORD003', customerName: 'Carol Williams', orderDate: '2024-07-17T09:15:00Z', status: 'Processing', totalAmount: 120.00, itemCount: 5 },
+  { id: 'ORD003', customerName: 'Carol Williams', orderDate: '2024-07-17T09:15:00Z', status: 'Packing', totalAmount: 120.00, itemCount: 5 },
   { id: 'ORD004', customerName: 'David Brown', orderDate: '2024-07-17T11:00:00Z', status: 'Pending', totalAmount: 15.99, itemCount: 1 },
   { id: 'ORD005', customerName: 'Eve Davis', orderDate: '2024-07-14T16:45:00Z', status: 'Cancelled', totalAmount: 33.75, itemCount: 2 },
-  { id: 'ORD006', customerName: 'Frank Miller', orderDate: '2024-07-18T08:20:00Z', status: 'Pending', totalAmount: 75.20, itemCount: 4 },
+  { id: 'ORD006', customerName: 'Frank Miller', orderDate: '2024-07-18T08:20:00Z', status: 'Out for Delivery', totalAmount: 75.20, itemCount: 4 },
   { id: 'ORD007', customerName: 'Grace Wilson', orderDate: '2024-07-18T10:55:00Z', status: 'Processing', totalAmount: 50.00, itemCount: 2 },
 ];
