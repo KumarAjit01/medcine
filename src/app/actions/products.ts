@@ -5,14 +5,30 @@ import * as z from 'zod';
 import type { Medicine } from '@/lib/mockData';
 import { mockCategories } from '@/lib/mockData'; // To validate category ID
 
+// Helper function for preprocessing dataAiHint
+const preprocessDataAiHint = (val: unknown): unknown => {
+  if (val === '' || val === null) {
+    return undefined;
+  }
+  return val;
+};
+
+// Helper function for validating category
+const isCategoryValid = (val: string): boolean => {
+  return mockCategories.some(cat => cat.id === val);
+};
+
 export const addProductSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
-  category: z.string().refine(val => mockCategories.some(cat => cat.id === val), { message: 'Invalid category selected.' }),
+  category: z.string().refine(isCategoryValid, { message: 'Invalid category selected.' }),
   price: z.coerce.number().min(0.01, { message: 'Price must be greater than 0.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   stock: z.coerce.number().int().min(0, { message: 'Stock must be a non-negative integer.' }),
   imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }),
-  dataAiHint: z.string().max(50, {message: 'AI hint cannot exceed 50 characters.'}).optional().transform(val => val === '' ? undefined : val), // Ensure empty string is treated as undefined
+  dataAiHint: z.preprocess(
+    preprocessDataAiHint,
+    z.string().max(50, {message: 'AI hint cannot exceed 50 characters.'}).optional()
+  ),
 });
 
 export type AddProductFormValues = z.infer<typeof addProductSchema>;
@@ -89,3 +105,4 @@ export async function addProductAction(
     product: newProduct,
   };
 }
+
