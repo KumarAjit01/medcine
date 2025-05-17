@@ -4,6 +4,7 @@
 import * as z from 'zod';
 import type { Medicine } from '@/lib/mockData';
 import { mockCategories } from '@/lib/mockData'; // To validate category ID
+import { connectToDatabase } from '@/lib/mongodb'; // Import MongoDB connection utility
 
 // Helper function for preprocessing dataAiHint
 const preprocessDataAiHint = (val: unknown): unknown => {
@@ -46,12 +47,11 @@ export type AddProductFormState = {
     dataAiHint?: string[];
     _form?: string[];
   };
-  product?: Medicine;
+  product?: Medicine; // Return the product that was added
 };
 
-// In-memory store for new products (simulated, resets on server restart)
-// For a real application, this would interact with a database.
-let simulatedNewProductsStore: Medicine[] = [];
+// The in-memory store is no longer needed as we're using MongoDB
+// let simulatedNewProductsStore: Medicine[] = [];
 
 export async function addProductAction(
   formData: AddProductFormValues
@@ -70,7 +70,6 @@ export async function addProductAction(
   const categoryDetails = mockCategories.find(cat => cat.id === newProductData.category);
 
   if (!categoryDetails) {
-    // This case should ideally be caught by Zod refine, but as a fallback.
     return {
       success: false,
       message: "Invalid category. Please select a valid category.",
@@ -78,12 +77,11 @@ export async function addProductAction(
     };
   }
 
-  console.log('Server Action: Attempting to add new product:');
+  console.log('Server Action: Attempting to add new product to MongoDB:');
   console.log(newProductData);
 
-  // Simulate adding to a database/store
   const newProduct: Medicine = {
-    id: `prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    id: `prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`, // Generate a unique ID
     name: newProductData.name,
     category: categoryDetails.name, // Store category name for display consistency
     price: newProductData.price,
@@ -93,16 +91,34 @@ export async function addProductAction(
     dataAiHint: newProductData.dataAiHint,
   };
 
-  simulatedNewProductsStore.push(newProduct);
-  console.log('Current simulated new products:', simulatedNewProductsStore.map(p => p.name));
+  try {
+    const db = await connectToDatabase(); // Uses default 'OnlineMedicineDB' or your ENV var
+    const medicinesCollection = db.collection<Medicine>('medicines');
+    
+    const result = await medicinesCollection.insertOne(newProduct);
 
+    if (!result.insertedId) {
+      throw new Error('Failed to insert product into database.');
+    }
 
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    console.log(`Product "${newProduct.name}" inserted with _id: ${result.insertedId}`);
 
-  return {
-    success: true,
-    message: `Product "${newProduct.name}" added successfully (simulated).`,
-    product: newProduct,
-  };
+    return {
+      success: true,
+      message: `Product "${newProduct.name}" added successfully to the database.`,
+      product: newProduct, // Return the product as it was added (including our custom id)
+    };
+
+  } catch (error) {
+    console.error('Error adding product to MongoDB:', error);
+    let errorMessage = "An unexpected error occurred while adding the product.";
+    if (error instanceof Error) {
+        errorMessage = error.message;
+    }
+    return {
+      success: false,
+      message: errorMessage,
+      errors: { _form: [errorMessage] }
+    };
+  }
 }
-
