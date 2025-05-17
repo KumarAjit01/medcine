@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/s
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
 import { Badge } from '@/components/ui/badge';
+import { usePathname } from 'next/navigation';
+
 
 const commonNavLinks = [
   { href: '/', label: 'Home', icon: Home },
@@ -16,15 +18,21 @@ const commonNavLinks = [
   { href: '/ai-recommendations', label: 'AI Recommender', icon: Bot },
 ];
 
-const adminNavLinks = [
-  { href: '/prescriptions/upload', label: 'Upload Prescription', icon: UploadCloud },
-  { href: '/admin', label: 'Admin Panel', icon: Shield },
-];
+// Admin links are now primarily in AdminLayout. 
+// We only show "Admin Panel" link here if user is admin, to navigate to the admin section.
+const adminEntryLink = { href: '/admin', label: 'Admin Panel', icon: Shield };
+const prescriptionUploadLink = { href: '/prescriptions/upload', label: 'Upload Prescription', icon: UploadCloud };
 
 
 const Header = () => {
   const isMobile = useIsMobile();
   const { isLoggedIn, logoutAction, isLoadingAuth, currentUser, cartItems, isAdmin } = useSimulatedAuth();
+  const pathname = usePathname();
+
+  // Do not render the main header on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const totalCartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -44,20 +52,24 @@ const Header = () => {
           </Link>
         )
       ))}
-      {isLoggedIn && isAdmin && adminNavLinks.map((link) => (
-         isSheet ? (
-          <SheetClose asChild key={link.href}>
-            <Link href={link.href} className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
-              <link.icon className="h-5 w-5" />
-              {link.label}
-            </Link>
-          </SheetClose>
-        ) : (
-          <Link key={link.href} href={link.href} className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors px-3 py-2 rounded-md">
-            {link.label}
-          </Link>
-        )
-      ))}
+      {isLoggedIn && isAdmin && (
+        <>
+          {[prescriptionUploadLink, adminEntryLink].map(link => ( // Show both links if admin
+             isSheet ? (
+              <SheetClose asChild key={link.href}>
+                <Link href={link.href} className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-lg">
+                  <link.icon className="h-5 w-5" />
+                  {link.label}
+                </Link>
+              </SheetClose>
+            ) : (
+              <Link key={link.href} href={link.href} className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors px-3 py-2 rounded-md">
+                {link.label}
+              </Link>
+            )
+          ))}
+        </>
+      )}
     </>
   );
 
@@ -156,7 +168,7 @@ const Header = () => {
     </>
   );
 
-   if (isLoadingAuth && isMobile === undefined) {
+   if (isLoadingAuth && isMobile === undefined) { // Check isMobile too, to avoid flash on initial mobile load
     return (
       <header className="bg-card shadow-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
