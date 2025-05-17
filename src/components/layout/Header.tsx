@@ -108,6 +108,13 @@ const Header = () => {
               <LogOut className="h-5 w-5 mr-2" /> Logout
             </Button>
           </SheetClose>
+          <SheetClose asChild>
+            <Button variant="ghost" asChild className="w-full justify-start mt-4 text-lg relative">
+              <Link href="/cart" className="flex items-center gap-2">
+                <CartButtonContent isSheet={true}/>
+              </Link>
+            </Button>
+          </SheetClose>
         </>
       ) : (
         <>
@@ -123,23 +130,18 @@ const Header = () => {
           </SheetClose>
         </>
       )}
-      <SheetClose asChild>
-        <Button variant="ghost" asChild className="w-full justify-start mt-4 text-lg relative">
-           <Link href="/cart" className="flex items-center gap-2">
-            <CartButtonContent isSheet={true}/>
-          </Link>
-        </Button>
-      </SheetClose>
     </>
   );
 
   const AuthButtonsDesktop = () => (
     <>
-      <Button variant="ghost" size="icon" asChild className="relative">
-        <Link href="/cart" aria-label="Shopping Cart">
-          <CartButtonContent />
-        </Link>
-      </Button>
+      {!isLoadingAuth && isLoggedIn && (
+        <Button variant="ghost" size="icon" asChild className="relative">
+          <Link href="/cart" aria-label="Shopping Cart">
+            <CartButtonContent />
+          </Link>
+        </Button>
+      )}
       {isLoadingAuth ? (
          <Button variant="outline" size="sm" disabled>
             <Loader2 className="animate-spin h-4 w-4" />
