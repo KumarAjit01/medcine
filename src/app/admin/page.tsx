@@ -14,18 +14,18 @@ export default function AdminDashboardPage() {
       icon: ShoppingCart,
     },
     {
+      title: 'Manage Products', // Updated title
+      description: 'Manage medicines and product details.', // Updated description
+      link: '/admin/products', // Updated link
+      icon: Package,
+      disabled: false, // Enabled
+    },
+    {
       title: 'User Management',
       description: 'View and manage user accounts.',
       link: '/admin/users',
       icon: Users,
       disabled: false, 
-    },
-    {
-      title: 'Product Catalog',
-      description: 'Manage medicines and other products (Placeholder).',
-      link: '#',
-      icon: Package,
-      disabled: true,
     },
   ];
 
@@ -62,4 +62,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-

@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSimulatedAuth } from '@/hooks/useSimulatedAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LayoutDashboard, ListOrdered, Users, LogOut, Home, Shield, Loader2 } from 'lucide-react';
+import { LayoutDashboard, ListOrdered, Users, LogOut, Home, Shield, Loader2, Package } from 'lucide-react'; // Added Package
 import Logo from '@/components/layout/Logo'; // Re-use main logo for consistency
 
 interface AdminLayoutProps {
@@ -17,6 +17,7 @@ interface AdminLayoutProps {
 const adminNavLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Manage Orders', icon: ListOrdered },
+  { href: '/admin/products', label: 'Manage Products', icon: Package }, // Added Products link
   { href: '/admin/users', label: 'User Management', icon: Users },
 ];
 
